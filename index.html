@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DNS Master - Complete Record Generator</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    :root {
+      --primary: #2A2A72;
+      --secondary: #009FFD;
+      --success: #00C851;
+      --error: #ff4444;
+      --background: #f8f9fa;
+      --text: #212529;
+      --input-bg: rgba(0, 0, 0, 0.03);
+    }
+
+    [data-theme="dark"] {
+      --primary: #009FFD;
+      --secondary: #2A2A72;
+      --background: #1a1a1a;
+      --text: #f8f9fa;
+      --input-bg: rgba(255, 255, 255, 0.05);
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+      margin: 0;
+      padding: 20px;
+      color: var(--text);
+      transition: background 0.3s;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: auto;
+      background: var(--background);
+      border-radius: 15px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+      padding: 30px;
+      position: relative;
+      transition: all 0.3s;
+    }
+
+    .theme-toggle {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1.5rem;
+      color: var(--text);
+      transition: transform 0.3s;
+    }
+
+    .theme-toggle:hover {
+      transform: rotate(180deg) scale(1.1);
+    }
+
+    h1 {
+      text-align: center;
+      margin: 0 0 30px;
+      font-weight: 700;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .tab {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+    }
+
+    .tab button {
+      padding: 15px 20px;
+      border: none;
+      background: rgba(0, 0, 0, 0.1);
+      color: var(--text);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 500;
+    }
+
+    .tab button.active {
+      background: var(--primary);
+      color: white;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+      background: var(--input-bg);
+      color: var(--text);
+      resize: vertical;
+    }
+
+    button.generate {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    button.generate:hover {
+      background: var(--secondary);
+    }
+
+    .output-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 30px;
+    }
+
+    .copy-btn {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .copy-btn:hover {
+      background: var(--secondary);
+    }
+
+    pre {
+      background: var(--input-bg);
+      padding: 15px;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin-top: 15px;
+    }
+
+    .status-message {
+      text-align: center;
+      margin-top: 20px;
+      color: var(--text);
+    }
+	/* Custom Radio Buttons */
+    .radio-group {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .radio-group label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .radio-group input[type="radio"] {
+      display: none; /* Hide the default radio button */
+    }
+
+    .radio-group .custom-radio {
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--primary);
+      border-radius: 50%;
+      position: relative;
+      transition: all 0.3s ease;
+    }
+
+    .radio-group .custom-radio::after {
+      content: '';
+      width: 12px;
+      height: 12px;
+      background: var(--primary);
+      border-radius: 50%;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0);
+      transition: all 0.3s ease;
+    }
+
+    .radio-group input[type="radio"]:checked + .custom-radio::after {
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    .radio-group input[type="radio"]:checked + .custom-radio {
+      border-color: var(--secondary);
+    }
+
+    .radio-group input[type="radio"]:focus + .custom-radio {
+      box-shadow: 0 0 0 3px rgba(0, 159, 253, 0.3);
+    }
+
+    .radio-group label:hover .custom-radio {
+      border-color: var(--secondary);
+    }
+  </style>
+</head>
+<body>
+  <<button class="theme-toggle" onclick="toggleTheme()">🌓</button>
+  <h1><i class="fas fa-network-wired"></i>DNS Master</h1>
+  
+  <div class="container">
+    <div class="tab">
+      <button class="active" onclick="showTab(event, 'spf')"><i class="fas fa-shield-alt"></i>SPF</button>
+      <button onclick="showTab(event, 'a')"><i class="fas fa-globe"></i>A Record</button>
+      <button onclick="showTab(event, 'mx')"><i class="fas fa-envelope"></i>MX</button>
+      <button onclick="showTab(event, 'dmarc')"><i class="fas fa-lock"></i>DMARC</button>
+    </div>
+    <div class="tab-content active" id="spf">
+      <h2>SPF Records</h2>
+      <textarea id="spfDomains" placeholder="SPF Domains (one per line)"></textarea>
+      <textarea id="spfSubdomains" placeholder="SPF Subdomains (one per line)"></textarea>
+      <textarea id="spfIPs" placeholder="SPF IPs (one per line)"></textarea>
+      <div class="radio-group">
+        <label>
+          <input type="radio" name="spfType" value="domains" checked>
+          <span class="custom-radio"></span>
+          Use Domains
+        </label>
+        <label>
+          <input type="radio" name="spfType" value="ips">
+          <span class="custom-radio"></span>
+          Use IPs
+        </label>
+      </div>
+      <button onclick="generateSPF()" class="generate">Generate SPF</button>
+    </div>
+
+    <div class="tab-content" id="a">
+      <h2>A Records</h2>
+      <textarea id="aDomains" placeholder="A Domains (one per line)"></textarea>
+      <textarea id="aSubdomains" placeholder="A Subdomains (one per line)"></textarea>
+      <textarea id="aIPs" placeholder="A IPs (one per line)"></textarea>
+      <button onclick="generateA()" class="generate">Generate A Records</button>
+    </div>
+
+    <div class="tab-content" id="mx">
+      <h2>MX Records</h2>
+      <textarea id="mxDomains" placeholder="MX Domains (one per line)"></textarea>
+      <textarea id="mxSubdomains" placeholder="MX Subdomains (one per line)"></textarea>
+      <textarea id="mxServers" placeholder="MX Servers (priority:server per line)"></textarea>
+      <button onclick="generateMX()" class="generate">Generate MX Records</button>
+    </div>
+
+    <div class="tab-content" id="dmarc">
+      <h2>DMARC Records</h2>
+      <textarea id="dmarcDomains" placeholder="DMARC Domains (one per line)"></textarea>
+      <button onclick="generateDMARC()" class="generate">Generate DMARC</button>
+    </div>
+
+    <!-- Output Section -->
+    <div class="output-header">
+      <h3><i class="fas fa-code"></i> Generated Configuration</h3>
+      <button class="copy-btn" onclick="copyOutput()">
+        <i class="fas fa-copy"></i>Copy
+      </button>
+    </div>
+    <pre id="output"></pre>
+  </div>
+
+  <div class="status-message" id="status"></div>
+
+  <script>
+    // Tab Switching
+    function showTab(event, tabId) {
+      document.querySelectorAll('.tab button').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+      event.currentTarget.classList.add('active');
+      document.getElementById(tabId).classList.add('active');
+    }
+
+    // Show Output
+    function showOutput(content) {
+      const output = document.getElementById('output');
+      output.textContent = content;
+    }
+
+    // Generate SPF Records
+    function generateSPF() {
+      const domains = document.getElementById('spfDomains').value.trim().split('\n').filter(Boolean);
+      const subdomains = document.getElementById('spfSubdomains').value.trim().split('\n').filter(Boolean);
+      const ips = document.getElementById('spfIPs').value.trim().split('\n').filter(Boolean);
+      const useIPs = document.querySelector('input[name="spfType"]:checked').value === 'ips';
+
+      let output = [];
+      if (useIPs && ips.length > 0) {
+        const ipList = ips.map(ip => `ip4:${ip}`).join(' ');
+        domains.forEach((domain, index) => {
+          const subdomain = subdomains[index] || domain;
+          output.push(`${domain},${subdomain},TXT,"v=spf1 ${ipList} -all"`);
+        });
+      } else if (!useIPs && domains.length > 0) {
+        const domainList = domains.map(domain => `include:${domain}`).join(' ');
+        domains.forEach((domain, index) => {
+          const subdomain = subdomains[index] || domain;
+          output.push(`${domain},${subdomain},TXT,"v=spf1 ${domainList} -all"`);
+        });
+      }
+      showOutput(output.join('\n'));
+    }
+
+    // Generate A Records
+    function generateA() {
+      const domains = document.getElementById('aDomains').value.trim().split('\n').filter(Boolean);
+      const subdomains = document.getElementById('aSubdomains').value.trim().split('\n').filter(Boolean);
+      const ips = document.getElementById('aIPs').value.trim().split('\n').filter(Boolean);
+
+      const output = [];
+      domains.forEach((domain, index) => {
+        const subdomain = subdomains[index] || domain;
+        const ipList = ips.join(';');
+        output.push(`${domain},${subdomain},TXT,Arecords:${ipList}`);
+      });
+      showOutput(output.join('\n'));
+    }
+
+    // Generate MX Records
+    function generateMX() {
+      const domains = document.getElementById('mxDomains').value.trim().split('\n').filter(Boolean);
+      const subdomains = document.getElementById('mxSubdomains').value.trim().split('\n').filter(Boolean);
+      const servers = document.getElementById('mxServers').value.trim().split('\n').filter(Boolean);
+
+      const output = [];
+      domains.forEach((domain, index) => {
+        const subdomain = subdomains[index] || domain;
+        servers.forEach(serverLine => {
+          const [priority, server] = serverLine.split(':');
+          if (priority && server) {
+            output.push(`${domain},${subdomain},MX,${priority} ${server}`);
+          }
+        });
+      });
+      showOutput(output.join('\n'));
+    }
+
+    // Generate DMARC Records
+    function generateDMARC() {
+      const domains = document.getElementById('dmarcDomains').value.trim().split('\n').filter(Boolean);
+      const output = domains.map(domain => 
+        `${domain},_dmarc.${domain},TXT,"v=DMARC1; p=reject; rua=mailto:dmarc@${domain}; ruf=mailto:dmarc@${domain}; adkim=r; aspf=s; pct=100; rf=afrf; ri=86400; sp=reject"`
+      ).join('\n');
+      showOutput(output);
+    }
+
+    // Copy Output to Clipboard
+    function copyOutput() {
+      const output = document.getElementById('output').textContent;
+      navigator.clipboard.writeText(output)
+        .then(() => alert('Copied to clipboard!'))
+        .catch(() => alert('Copy failed'));
+    }
+
+    // Theme Toggle
+    function toggleTheme() {
+      document.documentElement.setAttribute('data-theme',
+        document.documentElement.getAttribute('data-theme') === 'dark' ? '' : 'dark'
+      );
+    }
+  </script>
+</body>
+</html>
